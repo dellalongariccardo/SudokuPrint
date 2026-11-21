@@ -1,0 +1,30 @@
+SUDOKU PRINT — Web App installabile (PWA)
+
+CONTENUTO
+- index.html: applicazione completa, generazione puzzle e stampa
+- manifest.webmanifest: configurazione PWA
+- sw.js: cache offline dell'app
+- icon-192.png / icon-512.png: icone
+
+COME PUBBLICARLA GRATIS
+1. Estrai lo ZIP sul computer.
+2. Crea un repository GitHub (può essere privato solo se hai un piano che consente Pages privato; altrimenti pubblico).
+3. Carica i 5 file nella cartella principale del repository.
+4. In GitHub: Settings > Pages > Deploy from a branch > main > /(root) > Save.
+5. Attendi la pubblicazione e apri l'indirizzo HTTPS generato da GitHub Pages su iPhone con Safari.
+
+COME INSTALLARLA SU IPHONE
+1. Apri il sito in Safari (non da un browser interno ad altre app).
+2. Tocca Condividi.
+3. Scegli “Aggiungi alla schermata Home”.
+4. Conferma. L'icona Sudoku Print comparirà tra le app.
+
+COME CREARE IL PDF
+1. Scegli difficoltà, quantità, sudoku per pagina e se includere le soluzioni.
+2. Tocca “Genera fascicolo PDF”.
+3. Nella schermata di stampa iOS, apri l'anteprima (allargando con due dita, se necessario), poi Condividi > Salva su File.
+
+NOTE
+- Non richiede account né invia i puzzle a un server: la generazione avviene nel browser.
+- La difficoltà è graduata tramite il numero di indizi iniziali; non è una classificazione certificata da tecniche logiche avanzate.
+- La prima pubblicazione richiede HTTPS. GitHub Pages è una delle opzioni gratuite.

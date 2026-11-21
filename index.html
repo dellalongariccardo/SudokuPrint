@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#17251f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sudoku Print">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Sudoku Print</title>
+<style>
+:root{color-scheme:light;--ink:#17251f;--muted:#69756f;--accent:#276749;--paper:#fff;--bg:#f2f5f2}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:680px;margin:auto;padding:calc(20px + env(safe-area-inset-top)) 18px 40px}
+header{text-align:center;margin:10px 0 24px}h1{font-size:30px;margin:0 0 5px;letter-spacing:-1px}header p{margin:0;color:var(--muted)}
+.panel{background:white;border-radius:20px;padding:18px;margin:14px 0;box-shadow:0 3px 14px #14291b0b}
+h2{font-size:16px;margin:0 0 14px}.levels{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.level{border:1px solid #d9e1dc;background:#fff;border-radius:12px;padding:12px 4px;font-size:17px;font-weight:700;color:var(--ink)}
+.level small{display:block;font-size:10px;font-weight:500;color:var(--muted);margin-top:3px}
+.level.active{background:#e5f2e9;border:2px solid var(--accent);color:var(--accent);padding:11px 3px}
+.field{display:flex;align-items:center;justify-content:space-between;gap:15px;margin:13px 0}
+select{font:inherit;border:1px solid #d9e1dc;border-radius:10px;padding:11px;background:white;color:var(--ink);min-width:130px}
+.check{display:flex;align-items:center;gap:10px;margin:14px 0;color:#34433a}.check input{width:20px;height:20px;accent-color:var(--accent)}
+button.primary{width:100%;border:0;border-radius:14px;background:var(--accent);color:white;font-size:17px;font-weight:700;padding:16px;margin-top:8px}
+button:disabled{opacity:.55}.hint{font-size:12px;color:var(--muted);line-height:1.5}.status{min-height:20px;font-size:13px;color:var(--muted);text-align:center;margin-top:10px}
+#preview{display:none}.puzzle-card{background:white;border-radius:16px;padding:14px;margin:12px 0}.puzzle-title{font-weight:700;margin-bottom:10px;display:flex;justify-content:space-between}
+.sudoku{border-collapse:collapse;margin:auto;table-layout:fixed;width:min(100%,340px);aspect-ratio:1}
+.sudoku td{border:1px solid #9ba69f;text-align:center;width:11.11%;font-size:clamp(15px,4.4vw,23px);font-weight:500;padding:0;aspect-ratio:1}
+.sudoku tr:nth-child(3n) td{border-bottom:2px solid #17251f}.sudoku td:nth-child(3n){border-right:2px solid #17251f}.sudoku tr:first-child td{border-top:2px solid #17251f}.sudoku td:first-child{border-left:2px solid #17251f}
+.actions{display:flex;gap:10px;margin-top:14px}.actions button{flex:1;border:1px solid #d2ddd5;background:white;border-radius:12px;padding:13px;font-weight:650;color:var(--ink)}
+footer{text-align:center;color:var(--muted);font-size:11px;padding:12px}
+@media print{
+ body{background:white}main{max-width:none;padding:0;margin:0}header,.panel,#preview .screen-only,footer{display:none!important}
+ #preview{display:block!important}.puzzle-card{break-inside:avoid;border-radius:0;margin:0;padding:9mm 12mm;box-shadow:none;page-break-inside:avoid}
+ .puzzle-title{font-size:12pt;margin-bottom:5mm}.sudoku{width:145mm;height:145mm}
+ .sudoku td{font-size:18pt}.two-per-page .puzzle-card{height:50vh;padding:5mm 10mm;display:flex;flex-direction:column;justify-content:center;break-inside:avoid;page-break-inside:avoid}.two-per-page .sudoku{width:88mm;height:88mm}.two-per-page .sudoku td{font-size:13pt}.solution-start{break-before:page;page-break-before:always}
+ .solution-heading{font-size:20pt;margin:10mm 0}
+}
+</style>
+</head>
+<body>
+<main>
+<header><h1>Sudoku Print</h1><p>Crea i tuoi sudoku e stampali in PDF</p></header>
+<section class="panel">
+<h2>1. Scegli la difficoltà</h2>
+<div class="levels" id="levels">
+<button class="level active" data-level="1">1<small>Facile</small></button>
+<button class="level" data-level="2">2<small>Medio</small></button>
+<button class="level" data-level="3">3<small>Impegnativo</small></button>
+<button class="level" data-level="4">4<small>Difficile</small></button>
+<button class="level" data-level="5">5<small>Esperto</small></button>
+</div>
+<p class="hint" id="levelHint">Per iniziare, sudoku semplici con molti numeri già inseriti.</p>
+</section>
+<section class="panel">
+<h2>2. Personalizza il fascicolo</h2>
+<div class="field"><label for="quantity">Numero di sudoku</label><select id="quantity"><option>5</option><option selected>10</option><option>20</option><option>30</option><option>50</option></select></div>
+<div class="field"><label for="perPage">Sudoku per pagina</label><select id="perPage"><option value="1" selected>1 (grande)</option><option value="2">2</option></select></div>
+<label class="check"><input type="checkbox" id="includeSolutions" checked> Aggiungi le soluzioni alla fine</label>
+<p class="hint">Ogni schema ha una sola soluzione. La difficoltà è graduata principalmente in base al numero di caselle da completare.</p>
+<button class="primary" id="generate">Genera fascicolo PDF</button>
+<div class="status" id="status" aria-live="polite"></div>
+</section>
+<section id="preview" aria-live="polite"></section>
+<footer>Sudoku Print · I puzzle vengono generati direttamente sul dispositivo.</footer>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+let difficulty=1, puzzles=[];
+const hints={
+1:"Facile: circa 40–45 numeri iniziali.",
+2:"Medio: circa 36–39 numeri iniziali.",
+3:"Impegnativo: circa 32–35 numeri iniziali.",
+4:"Difficile: circa 28–31 numeri iniziali.",
+5:"Esperto: circa 24–27 numeri iniziali."
+};
+document.querySelectorAll(".level").forEach(b=>b.addEventListener("click",()=>{
+ document.querySelectorAll(".level").forEach(x=>x.classList.remove("active"));
+ b.classList.add("active");difficulty=+b.dataset.level;$("#levelHint").textContent=hints[difficulty];
+}));
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+function candidates(g,r,c){let used=new Set();for(let i=0;i<9;i++){used.add(g[r][i]);used.add(g[i][c]);used.add(g[3*Math.floor(r/3)+Math.floor(i/3)][3*Math.floor(c/3)+i%3]);}return [1,2,3,4,5,6,7,8,9].filter(n=>!used.has(n))}
+function solve(g,limit=2){
+ let count=0, first=null;
+ function rec(){
+  if(count>=limit)return;
+  let best=null, opts=null;
+  for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(!g[r][c]){
+   let o=candidates(g,r,c);if(!opts||o.length<opts.length){best=[r,c];opts=o;if(o.length===0)return;}
+  }
+  if(!best){count++;if(!first)first=g.map(row=>row.slice());return;}
+  let [r,c]=best;for(let n of shuffle(opts)){g[r][c]=n;rec();g[r][c]=0;if(count>=limit)return;}
+ }
+ rec();return {count,solution:first};
+}
+function fullGrid(){
+ let g=Array.from({length:9},()=>Array(9).fill(0));
+ function fill(pos=0){if(pos===81)return true;let r=Math.floor(pos/9),c=pos%9;for(let n of shuffle(candidates(g,r,c))){g[r][c]=n;if(fill(pos+1))return true;g[r][c]=0;}return false}
+ fill();return g;
+}
+function makePuzzle(level){
+ let solution=fullGrid(), puzzle=solution.map(r=>r.slice());
+ const ranges={1:[40,45],2:[36,39],3:[32,35],4:[28,31],5:[24,27]};
+ let [lo,hi]=ranges[level], target=lo+Math.floor(Math.random()*(hi-lo+1));
+ let cells=shuffle(Array.from({length:81},(_,i)=>i));
+ for(let idx of cells){
+  if(puzzle.flat().filter(Boolean).length<=target)break;
+  let r=Math.floor(idx/9),c=idx%9,old=puzzle[r][c];puzzle[r][c]=0;
+  let test=puzzle.map(row=>row.slice()), result=solve(test,2);
+  if(result.count!==1)puzzle[r][c]=old;
+ }
+ return {puzzle,solution};
+}
+function table(grid){return `<table class="sudoku" aria-label="Griglia sudoku">${grid.map(row=>`<tr>${row.map(n=>`<td>${n||""}</td>`).join("")}</tr>`).join("")}</table>`}
+function render(){
+ const el=$("#preview");el.innerHTML="";el.classList.toggle("two-per-page",$("#perPage").value==="2");
+ const add=(grid,title,extra="")=>{let d=document.createElement("article");d.className="puzzle-card "+extra;d.innerHTML=`<div class="puzzle-title"><span>${title}</span><span>Sudoku Print</span></div>${table(grid)}`;el.appendChild(d)};
+ puzzles.forEach((p,i)=>add(p.puzzle,`Sudoku ${String(i+1).padStart(2,"0")}`));
+ if($("#includeSolutions").checked){
+  let h=document.createElement("h2");h.className="solution-heading solution-start";h.textContent="Soluzioni";el.appendChild(h);
+  puzzles.forEach((p,i)=>add(p.solution,`Soluzione ${String(i+1).padStart(2,"0")}`));
+ }
+}
+$("#generate").addEventListener("click",()=>{
+ const btn=$("#generate"),status=$("#status");btn.disabled=true;status.textContent="Genero gli schemi…";
+ setTimeout(()=>{
+  try{
+   const count=+$("#quantity").value;puzzles=[];
+   for(let i=0;i<count;i++){puzzles.push(makePuzzle(difficulty));status.textContent=`Creati ${i+1} di ${count}…`;}
+   render();status.textContent="Fascicolo pronto. Si aprirà la finestra di stampa: scegli «Salva su File» per conservarlo in PDF.";
+   btn.disabled=false;
+   setTimeout(()=>window.print(),250);
+  }catch(e){status.textContent="Si è verificato un problema. Riprova.";btn.disabled=false;console.error(e)}
+ },50);
+});
+if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+</script>
+</body></html>
